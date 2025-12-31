@@ -66,7 +66,7 @@ int init_all_part()
 
 
 
-	//这里插个眼  Man, What Can I Say!!!
+	
 	int max_id = get_max_location_id();
 	int id_num = (max_id == 0) ? 100 : max_id + 10;
 	roads = (Road*)malloc(id_num*sizeof(Road));
@@ -548,9 +548,84 @@ void dfs_shortest_path(int currentId, int endId, int currentLen, int* path, int 
 		if (currentLen < shortest_len) {
 			shortest_len = currentLen;
 			shortest_path_len = path_len;
-			mem
+			memcpy(shortest_path, path, path_len * sizeof(int));
+		}
+		return;
+	}
+	visited[currentId] = 1;
+	Road_Link* p = roads[currentId].link;
+	while (p != NULL) {
+		int next_id = p->id;
+		if (!visited[next_id]) {
+			path[path_len] = next_id;
+			dfs_shortest_path(next_id, endId, currentLen + p->length, path, path_len++, visited, max_id_plus);
+		}
+		p = p->next;
+	}
+	visited[currentId] = 0;
+}
+void query_shortest_path_dfs()
+{
+	printf("================== 查询两景点之间的最短路径 ==================\n");
+	int startId, endId;
+	printf("请输入起点ID:");
+	scanf("%d", &startId);
+	printf("请输入终点ID:");
+	scanf("%d", &endId);
+	if (!findLocation_by_id(hash_id, startId) || !findLocation_by_id(hash_id, endId)) {
+		printf("输入的id不正确，无法找到对应景点\n");
+		clearInputBuffer();
+		return;
+	}
+	if (startId == endId) {
+		printf("起点和终点不能相等\n");
+		clearInputBuffer();
+		return;
+	}
+	int max_id = 0;
+	for (int i = 0;i < hash_id->size;i++) {
+		HashNode* p = hash_id->table[i];
+		while (p != NULL) {
+			if (p->data->id > max_id) {
+				max_id = p->data->id;
+			}
+			p = p->next;
 		}
 	}
+	int max_id_plus = max_id + 10;
+	int* path = (int*)malloc(max_id_plus * sizeof(int));
+	int* visited = (int*)calloc(max_id_plus + 1, sizeof(int));
+	shortest_path = (int*)malloc(max_id_plus * sizeof(int));
+	if (path == NULL || visited == NULL || shortest_path == NULL) {
+		printf("内存分配出问题\n");
+		free(path);
+		free(visited);
+		free(shortest_path);
+		return;
+	}
+	shortest_len = INT_MAX;
+	shortest_path_len = 0;
+	path[0] = startId;
+	dfs_shortest_path(startId, endId, 0, path, 1, visited, max_id_plus);
+	if (shortest_len == INT_MAX) {
+		printf("没有可达路径\n");
+	}
+	else {
+		printf("从 %s 到 %s 的最短路径为：\n",
+			findLocation_by_id(hash_id, startId)->name, findLocation_by_id(hash_id, endId)->name);
+		for (int i = 0;i < shjortest_path_len;i++) {
+			location* loc = findLocation_by_id(hash_id, shortest_path[i]);
+			printf("%s(%d)", loc->name, loc->id);
+			if (i != shortest_path_len - 1) {
+				printf("->");
+			}
+		}
+		printf("  总长度：%d m\n", shortest_len);
+	}
+	free(path);
+	free(visited);
+	free(shortest_path);
+	shortest_path = NULL;
 }
 
 //如果整数输入错误，重新输入
@@ -665,6 +740,7 @@ int main()
 			find_location();
 			break;
 		case 2:
+			query_shortest_path_dfs();
 			break;
 		case 3:
 			query_two_all_paths();
