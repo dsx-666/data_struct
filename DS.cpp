@@ -32,6 +32,8 @@ void menu() {
 HashTable* hash_str = NULL;
 HashTable* hash_id = NULL;
 Road* roads = NULL;
+//统计有多少边
+int count_edge = 0;
 
 int get_max_location_id() {
 	if (hash_id == NULL || hash_id->table == NULL) return 0;
@@ -242,6 +244,7 @@ int add_path(int startId, int endId, int length)
 	link2->next = roads[startId].link;
 	link2->next = roads[startId].link;
 	roads[startId].link = link2;
+	count_edge++;
 	return 1;
 }
 void operate_add_path()
@@ -304,6 +307,7 @@ int delete_path(int startId, int endId)
 		pre = p;
 		p = p->next;
 	}
+	count_edge--;
 	return 1;
  }
 void operate_delete_path()
@@ -613,7 +617,7 @@ void query_shortest_path_dfs()
 	else {
 		printf("从 %s 到 %s 的最短路径为：\n",
 			findLocation_by_id(hash_id, startId)->name, findLocation_by_id(hash_id, endId)->name);
-		for (int i = 0;i < shjortest_path_len;i++) {
+		for (int i = 0;i < shortest_path_len;i++) {
 			location* loc = findLocation_by_id(hash_id, shortest_path[i]);
 			printf("%s(%d)", loc->name, loc->id);
 			if (i != shortest_path_len - 1) {
