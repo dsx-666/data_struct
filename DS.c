@@ -1,4 +1,3 @@
-/*
 #define _CRT_SECURE_NO_WARNINGS 1
 #include<stdio.h>
 #include<stdlib.h>
@@ -7,6 +6,7 @@
 #include"hash.h"
 #include"heap.h"
 #include"read_config.h"
+#include<stdbool.h>
 void input_int(int* input);
 void input_char(char* c);
 //校园导游程序的菜单面板
@@ -77,7 +77,7 @@ int init_all_part()
 	}
 	for (int i = 0;i < id_num;i++) {
 		roads[i].head == NULL;
-		roads[i].link = NULL;
+		roads[i].link == NULL;
 	}
 
 	return 1;
@@ -784,4 +784,3 @@ int main()
 
 	return 0;
 }
-*/

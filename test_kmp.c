@@ -36,7 +36,7 @@ void random_string(char* s, int len) {
 }
 
 
-
+/*
 int main() {
     srand((unsigned)time(NULL));
 
@@ -82,4 +82,4 @@ int main() {
     free(text);
     free(pattern);
     return 0;
-}
+}*/

@@ -1,5 +1,4 @@
-﻿/*
-#define _CRT_SECURE_NO_WARNINGS  1 
+﻿#define _CRT_SECURE_NO_WARNINGS  1 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -78,7 +77,7 @@ int check_array_sort(Value** arr, int len)
 	return 1;
 }
 
-int main() {
+int test_heap() {
 	srand((unsigned int)time(NULL));
 	clock_t start, end;
 	double cost_time;
@@ -184,4 +183,3 @@ int main() {
 
 	return 0;
 }
-*/
