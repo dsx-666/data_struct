@@ -10,13 +10,8 @@ typedef struct location {
 typedef struct Road_Link {
     int id;  //对应景点id
     int length;   //路径长度
-    struct Road_Link* next;  //指向下一个链表的指针
+    struct Road_Link* next;  //指向下一个路的指针
 } Road_Link;  //链表存放景点数据
-
-typedef struct Road {
-    location* head;  //链表头节点
-    struct Road_Link* link;  //路链表
-}Road;  //邻接表，表示头节点到其他景点的路径
 
 
 

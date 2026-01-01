@@ -15,7 +15,7 @@ int read_config_int(const char* file_name, const char* var, int* ans) {
 	else {
 		while (fscanf(f, "%s", str) == 1) {
 			if (strcmp(str, var) == 0) {
-				fscanf(f, "%d", &ans);
+				fscanf(f, "%d", ans);
 				fclose(f);
 				return 1;
 			}

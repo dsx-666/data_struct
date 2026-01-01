@@ -135,7 +135,7 @@ int insertLocation(HashTable* hash, location* loc) {
     }
     node->data = loc;
     node->next = hashTable[index];
-    node->link = NULL;
+    node->road = NULL;
     hashTable[index] = node;
 
     hash->count++;
@@ -186,6 +186,13 @@ int deleteLocation_by_id(HashTable* hash, int id) {
                 pre->next = p->next;
             else
                 hashTable[index] = p->next;
+            if (p->road) {
+                Road_Link* p_road = p->road->next;
+                while (p_road) {
+                    eraseRoad_Link(hash, p->data->id, p_road->id);
+                    p_road = p_road->next;
+                }
+            }
             free(p);
             hash->count--;
             return 1;
@@ -193,6 +200,7 @@ int deleteLocation_by_id(HashTable* hash, int id) {
         pre = p;
         p = p->next;
     }
+
     return 0;
 }
 
@@ -286,4 +294,135 @@ HashNode* findHashNode_by_id(HashTable* hash, int id) {
         p = p->next;
     }
     return NULL;
+}
+int findRoad_Link(HashTable* hash, int from_id, int to_id) {
+    HashNode* from_node = findHashNode_by_id(hash, from_id);
+	HashNode* to_node = findHashNode_by_id(hash, to_id);
+	if (from_node == NULL || to_node == NULL) {
+		return -1; // 节点不存在
+	}
+
+	// 查找from_node到to_node的链接
+	Road_Link* p = from_node->road;
+	while (p) {
+		if (p->id == to_id) {
+			return 1; // 链接存在
+		}
+		p = p->next;
+	}
+
+	return -2; // 道路不存在
+
+
+}
+int insertRoad_Link(HashTable* hash, int from_id, int to_id, int length) {
+	HashNode* from_node = findHashNode_by_id(hash, from_id);
+	HashNode* to_node = findHashNode_by_id(hash, to_id);
+	if (from_node == NULL || to_node == NULL) {
+		return -1; // 节点不存在
+	}
+    if(findRoad_Link(hash, from_id, to_id) == 1) {
+		return -4; // 道路已存在
+	}
+	// 创建新的道路链接
+	Road_Link* new_link = (Road_Link*)malloc(sizeof(Road_Link));
+	if (new_link == NULL) {
+		return -3; // 内存分配失败
+	}
+	new_link->next = to_node->road;
+	new_link->length = length;
+    to_node->road = new_link;
+    new_link->id = from_node->data->id;
+	// 由于是无向图，继续添加链接
+	Road_Link* reverse_link = (Road_Link*)malloc(sizeof(Road_Link));
+	if (reverse_link == NULL) {
+		return -3; // 内存分配失败
+	}
+	reverse_link->next = from_node->road;
+	reverse_link->length = length;
+	from_node->road = reverse_link;
+    reverse_link->id = to_node->data->id;
+
+	return 1; // 插入成功
+}
+
+int eraseRoad_Link(HashTable* hash, int from_id, int to_id) {
+    HashNode* from_node = findHashNode_by_id(hash, from_id);
+	HashNode* to_node = findHashNode_by_id(hash, to_id);
+	if (from_node == NULL || to_node == NULL) {
+		return -1; // 节点不存在
+	}
+    int one = 0;
+    int two = 0;
+	// 删除from_node到to_node的链接
+	Road_Link* p = from_node->road;
+	Road_Link* pre = NULL;
+	while (p) {
+		if (p->id == to_id) {
+            one = 1;
+			if (pre)
+				pre->next = p->next;
+			else
+				from_node->road = p->next;
+			free(p);
+			break;
+		}
+		pre = p;
+		p = p->next;
+	}
+    
+	// 删除to_node到from_node的链接
+	p = to_node->road;
+	pre = NULL;
+	while (p) {
+		if (p->id == from_id) {
+            two = 1;
+			if (pre)
+				pre->next = p->next;
+			else
+				to_node->road = p->next;
+			free(p);
+			break;
+		}
+		pre = p;
+		p = p->next;
+	}
+    if (one == 0 && two == 0) {
+        return -3;
+    }
+	return 1; // 删除成功
+}
+void freeHashTable(HashTable* hash) {
+    if (hash == NULL) { 
+        return;
+    }
+
+    // 遍历哈希表所有桶，释放每一个桶上的链表节点
+    for (int i = 0; i < hash->size; i++) {
+        HashNode* p = hash->table[i]; // 当前桶的头节点
+        while (p != NULL) {
+            HashNode* temp = p; // 临时保存当前节点，用于释放
+            p = p->next;        
+
+            if (temp->data != NULL) {
+                free(temp->data);
+                temp->data = NULL;// 置空，杜绝野指针
+            }
+
+            // 释放哈希节点本身 HashNode
+            free(temp);
+            temp = NULL;
+        }
+        hash->table[i] = NULL; // 桶置空
+    }
+
+    // 释放哈希表的桶数组空间
+    if (hash->table != NULL) {
+        free(hash->table);
+        hash->table = NULL;
+    }
+
+    // 释放哈希表结构体本体
+    free(hash);
+    hash = NULL;
 }

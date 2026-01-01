@@ -77,7 +77,7 @@ int check_array_sort(Value** arr, int len)
 	return 1;
 }
 
-int test_heap() {
+void test_heap() {
 	srand((unsigned int)time(NULL));
 	clock_t start, end;
 	double cost_time;
@@ -181,5 +181,5 @@ int test_heap() {
 	free(bubble_arr);
 	free_Value_Array(heap);
 
-	return 0;
+	return ;
 }

@@ -32,29 +32,15 @@ void menu() {
 //全局组件，各个方法都可能用到
 HashTable* hash_str = NULL;
 HashTable* hash_id = NULL;
-Road* roads = NULL;
-
-int get_max_location_id() {
-	if (hash_id == NULL || hash_id->table == NULL) return 0;
-	int max_id = 0;
-	for (int i = 0; i < hash_id->size; i++) {
-		HashNode* node = hash_id->table[i];
-		while (node != NULL) {
-			if (node->data != NULL && node->data->id > max_id) {
-				max_id = node->data->id;
-			}
-			node = node->next;
-		}
-	}
-	return max_id;
-}
+HashTable* hash_vis = NULL;
+int str_hash_size;
+int id_hash_size;
 
 //初始化所有要用到的组件
 int init_all_part()
 {
 	//从read_config.h读取哈希表初始大小
-	int str_hash_size = 11;
-	int id_hash_size = 11;
+	
 	read_config_int(FILE_NAME, "str_hash_size", &str_hash_size);
 	read_config_int(FILE_NAME, "id_hash_size", &id_hash_size);
 	//开始去初始化哈希表
@@ -64,22 +50,7 @@ int init_all_part()
 		printf("hash表初始化不成功\n");
 		return -1;
 	}
-
-
-
 	
-	int max_id = get_max_location_id();
-	int id_num = (max_id == 0) ? 100 : max_id + 10;
-	roads = (Road*)malloc(id_num*sizeof(Road));
-	if (roads == NULL) {
-		printf("邻接表初始化不成功\n");
-		return -1;
-	}
-	for (int i = 0;i < id_num;i++) {
-		roads[i].head == NULL;
-		roads[i].link == NULL;
-	}
-
 	return 1;
 }
 
@@ -162,7 +133,6 @@ void add_location()
 	int res1 = insertLocation(hash_id, loc);
 	int res2 = insertLocation(hash_str, loc);
 	if (res1 == 1 && res2 == 1) {
-		roads[loc->id].head = loc;
 		printf("插入成功\n");
 	}
 	else if (res1 != 1 || res2 != 1) {
@@ -223,27 +193,11 @@ void show_all_locations()
 //添加两个景点的路径信息
 int add_path(int startId, int endId, int length)
 {
-	if (findLocation_by_id(hash_id, startId) == NULL ||
-		findLocation_by_id(hash_id, endId) == NULL){
-			return -1;
-		}
 	if (startId == endId || length <= 0) {
 		return -2;
 	}
-	Road_Link* link1 = (Road_Link*)malloc(sizeof(Road_Link));
-	if (link1 == NULL) return -3;
-	link1->id = startId;
-	link1->length = length;
-	link1->next = roads[endId].link;
-	roads[endId].link = link1;
-	Road_Link* link2 = (Road_Link*)malloc(sizeof(Road_Link));
-	if (link2 == NULL) return -3;
-	link2->id = endId;
-	link2->length = length;
-	link2->next = roads[startId].link;
-	link2->next = roads[startId].link;
-	roads[startId].link = link2;
-	return 1;
+	int ans = insertRoad_Link(hash_id, startId, endId, length);
+	return ans;
 }
 void operate_add_path()
 {
@@ -265,8 +219,11 @@ void operate_add_path()
 	else if (res == -2) {
 		printf("参数有误（起点和终点的id一样或者长度为负数）\n");
 	}
-	else {
+	else if(res == -3){
 		printf("申请内存失败\n");
+	}
+	else {
+		printf("已有对应的路径\n");
 	}
 
 }
@@ -277,35 +234,9 @@ int delete_path(int startId, int endId)
 	if (startId == endId) {
 		return -2;
 	}
-	if (findLocation_by_id(hash_id, startId) == NULL ||
-		findLocation_by_id(hash_id, endId) == NULL) {
-		return -1;
-	}
-	Road_Link* p = roads[startId].link, * pre = NULL;
-	while (p)
-	{
-		if (p->id == endId) {
-			if (pre) pre->next = p->next;
-			else roads[startId].link = p->next;
-			free(p);
-			break;
-		}
-		pre = p;
-		p = p->next;
-	}
-	p = roads[endId].link;
-	while (p)
-	{
-		if (p->id == startId) {
-			if (pre) pre->next = p->next;
-			else roads[endId].link = p->next;
-			free(p);
-			break;
-		}
-		pre = p;
-		p = p->next;
-	}
-	return 1;
+	
+	int ans = eraseRoad_Link(hash_id, startId, endId);
+	return ans;
  }
 void operate_delete_path()
 {
@@ -321,6 +252,9 @@ void operate_delete_path()
 	}
 	else if(res==-1) {
 		printf("输入错误，无法从输入的Id找到对应景点\n");
+	}
+	else if (res == -3) {
+		printf("没有对应的路径\n");
 	}
 	else {
 		printf("起点id和终点id不能相同\n");
@@ -383,7 +317,7 @@ void show_all_path()
 				continue;
 			}
 			int current_id = loc->id;
-			Road_Link* path = roads[current_id].link;
+			Road_Link* path = findHashNode_by_id(hash_id, current_id)->road;
 			printf("景点【名称：%s（ID：%d）】的路径：\n", loc->name, current_id);
 			if (path == NULL) {
 				printf("该景点无任何路径\n");
@@ -411,10 +345,10 @@ void show_all_path()
 
 
 //查询任意两个景点的所有路径
-int* path=NULL;           
-int* visited=NULL;        
+int* path=NULL;                  
 int path_length=0;     
 int path_count=0;      
+
 void dfs(int currentId, int endId, int currentLen,int max_id_plus)
 {
 	if (currentId < 0 || currentId > max_id_plus) {
@@ -440,11 +374,19 @@ void dfs(int currentId, int endId, int currentLen,int max_id_plus)
 		return;
 	}
 	if (currentId > max_id_plus) return;
-	visited[currentId] = 1;
-	Road_Link* p = roads[currentId].link;
+	location* temp = (location*)malloc(sizeof(location));
+	if (temp != NULL) {
+		*temp = *findLocation_by_id(hash_id, currentId);
+	}
+	else {
+		exit(0);
+	}
+	
+	insertLocation(hash_vis, temp);
+	Road_Link* p = findHashNode_by_id(hash_id, currentId)->road;
 	while (p != NULL) {
 		int next_id = p->id;
-		if (!visited[next_id]) {
+		if (findLocation_by_id(hash_vis,next_id) == NULL) {
 			path[path_length++] = next_id;
 			dfs(next_id, endId, currentLen + p->length,max_id_plus);
 			
@@ -453,7 +395,7 @@ void dfs(int currentId, int endId, int currentLen,int max_id_plus)
 		
 		p = p->next;
 	}
-	visited[currentId]=0;
+	deleteLocation_by_id(hash_vis, currentId);
 }
 void query_two_all_paths()
 {
@@ -473,21 +415,12 @@ void query_two_all_paths()
 		clearInputBuffer();
 		return;
 	}
-	 int max_id = 0;
-	 for (int i = 0; i < hash_id->size; i++) {
-	     HashNode* node = hash_id->table[i];
-	     while (node) {
-	         if (node->data->id > max_id) max_id = node->data->id;
-	         node = node->next;
-	     }
-	 }
-	 int max_id_plus = max_id + 10;
-	 path = (int*)malloc(max_id_plus * sizeof(int));
-	 visited = (int*)calloc(max_id_plus + 1,sizeof(int));
-	if (path == NULL || visited == NULL) {
+	path = (int*)malloc((hash_id->count+1) * sizeof(int));
+	hash_vis = initHashTable(1, id_hash_size);
+	if (path == NULL || hash_vis == NULL) {
 		printf("内存分配出问题\n");
 		free(path);
-		free(visited);
+		freeHashTable(hash_vis);
 		return;
 	}
 	path_length = 0;
@@ -495,16 +428,16 @@ void query_two_all_paths()
 	path_count = 0;
 	printf("\n从 %s 到 %s 的所有路径：\n",
 		findLocation_by_id(hash_id, startId)->name, findLocation_by_id(hash_id, endId)->name);
-	dfs(startId, endId, 0,max_id_plus);
+	dfs(startId, endId, 0,hash_id->count+1);
 	if (path_count == 0) {
 		printf("没有找到路径\n");
 	}else{
 		printf("共找到 %d 条路径\n", path_count);
 	}
 	free(path);
-	free(visited);
+	freeHashTable(hash_vis);
 	path = NULL;
-	visited = NULL;
+	hash_vis = NULL;
 }
 
 //删除某景点和其对应的路径信息
@@ -543,7 +476,7 @@ void delete_location_path()
 int shortest_len = INT_MAX;
 int* shortest_path = NULL;
 int shortest_path_len = 0;   //最短路径上面的节点数目
-void dfs_shortest_path(int currentId, int endId, int currentLen, int* path, int path_len, int* visited, int max_id_plus)
+void dfs_shortest_path(int currentId, int endId, int currentLen, int* path, int path_len, int max_id_plus)
 {
 	if (currentId == endId) {
 		if (currentLen < shortest_len) {
@@ -553,17 +486,24 @@ void dfs_shortest_path(int currentId, int endId, int currentLen, int* path, int 
 		}
 		return;
 	}
-	visited[currentId] = 1;
-	Road_Link* p = roads[currentId].link;
+	location* temp = (location*)malloc(sizeof(location));
+	if (temp != NULL) {
+		*temp = *findLocation_by_id(hash_id, currentId);
+	}
+	else {
+		exit(0);
+	}
+	insertLocation(hash_vis, temp);
+	Road_Link* p = findHashNode_by_id(hash_id, currentId)->road;
 	while (p != NULL) {
 		int next_id = p->id;
-		if (!visited[next_id]) {
+		if (findLocation_by_id(hash_vis, next_id) == NULL) {
 			path[path_len] = next_id;
-			dfs_shortest_path(next_id, endId, currentLen + p->length, path, path_len++, visited, max_id_plus);
+			dfs_shortest_path(next_id, endId, currentLen + p->length, path, path_len++, max_id_plus);
 		}
 		p = p->next;
 	}
-	visited[currentId] = 0;
+	deleteLocation_by_id(hash_vis, currentId);
 }
 void query_shortest_path_dfs()
 {
@@ -583,31 +523,21 @@ void query_shortest_path_dfs()
 		clearInputBuffer();
 		return;
 	}
-	int max_id = 0;
-	for (int i = 0;i < hash_id->size;i++) {
-		HashNode* p = hash_id->table[i];
-		while (p != NULL) {
-			if (p->data->id > max_id) {
-				max_id = p->data->id;
-			}
-			p = p->next;
-		}
-	}
-	int max_id_plus = max_id + 10;
-	int* path = (int*)malloc(max_id_plus * sizeof(int));
-	int* visited = (int*)calloc(max_id_plus + 1, sizeof(int));
-	shortest_path = (int*)malloc(max_id_plus * sizeof(int));
-	if (path == NULL || visited == NULL || shortest_path == NULL) {
+	
+	int* path = (int*)malloc((hash_id->count + 1) * sizeof(int));
+	hash_vis = initHashTable(1, id_hash_size);
+	shortest_path = (int*)malloc((hash_id->count + 1) * sizeof(int));
+	if (path == NULL || hash_vis == NULL || shortest_path == NULL) {
 		printf("内存分配出问题\n");
 		free(path);
-		free(visited);
+		freeHashTable(hash_vis);
 		free(shortest_path);
 		return;
 	}
 	shortest_len = INT_MAX;
 	shortest_path_len = 0;
 	path[0] = startId;
-	dfs_shortest_path(startId, endId, 0, path, 1, visited, max_id_plus);
+	dfs_shortest_path(startId, endId, 0, path, 1, hash_id->count+1);
 	if (shortest_len == INT_MAX) {
 		printf("没有可达路径\n");
 	}
@@ -624,7 +554,7 @@ void query_shortest_path_dfs()
 		printf("  总长度：%d m\n", shortest_len);
 	}
 	free(path);
-	free(visited);
+	freeHashTable(hash_vis);
 	free(shortest_path);
 	shortest_path = NULL;
 }
@@ -665,7 +595,7 @@ void enter_again() {
 }
 
 //释放所有分配的内存
-void free_all()
+/*void free_all()
 {
 	if (roads != NULL&&hash_id!=NULL) {
 		for (int i = 0;i < hash_id->size;i++) {
@@ -715,7 +645,7 @@ void free_all()
 		hash_str = NULL;
 	}
 }
-
+*/
 
 int main()
 {

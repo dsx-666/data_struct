@@ -1,2 +1,2 @@
-str_hash_size 2
-id_hash_size 2
+str_hash_size 11
+id_hash_size 11

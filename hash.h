@@ -4,12 +4,12 @@
 
 typedef struct location location;
 
-typedef struct Road Road;
+typedef struct Road_Link Road_Link;
 
 typedef struct HashNode {
 	location* data;   // 景点信息
     struct HashNode* next;  // 链表指针（解决冲突）
-    Road* road; // 路链表存放路径信息
+    Road_Link* road; // 路链表存放路径信息
 } HashNode;
 
 typedef struct {
@@ -55,5 +55,11 @@ int show_Locations_by_ID(HashTable* hash, int id);
 HashNode* findHashNode_by_str(HashTable* hash, const char* name);
 // 通过ID查找哈希节点
 HashNode* findHashNode_by_id(HashTable* hash, int id);
-
-
+// 插入道路链接，是无向网,成功返回1，否则返回-1
+int insertRoad_Link(HashTable* hash, int from_id, int to_id, int length);
+// 删除道路链接，是无向网，成功返回1，否则返回-1
+int eraseRoad_Link(HashTable* hash, int from_id, int to_id);
+// 寻找路径是否存在，存在返回1，ID风景不存在返回-1，不存在-2
+int findRoad_Link(HashTable* hash, int from_id, int to_id);
+// 释放哈希表内存
+void freeHashTable(HashTable* hash);

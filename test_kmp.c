@@ -36,8 +36,8 @@ void random_string(char* s, int len) {
 }
 
 
-/*
-int main() {
+
+void test_kmp() {
     srand((unsigned)time(NULL));
 
     const int STR_LEN = 100000;   // 主串长度
@@ -81,5 +81,5 @@ int main() {
 
     free(text);
     free(pattern);
-    return 0;
-}*/
+    return ;
+}
