@@ -7,7 +7,6 @@ typedef struct HashTable HashTable;
 int kmp_find(const char* string, const char* substr);
 
 // 通过KMP算法在哈希表中搜索包含指定子串的景点，返回匹配的景点数组
-
 location* kmp_search_location(HashTable* hash, const char* name);
 
 

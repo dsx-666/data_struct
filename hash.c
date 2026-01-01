@@ -257,3 +257,33 @@ int show_Locations_by_ID(HashTable* hash, int id) {
 
     return 0;
 }
+HashNode* findHashNode_by_str(HashTable* hash, const char* name) {
+    int index = 0;
+    int table_size = hash->size;
+    HashNode** hashTable = hash->table;
+    index = hash_fun_str(name, table_size);
+
+    HashNode* p = hashTable[index];
+
+    while (p) {
+        if (strcmp(p->data->name, name) == 0)
+            return p;
+        p = p->next;
+    }
+    return NULL;
+}
+HashNode* findHashNode_by_id(HashTable* hash, int id) {
+    int index = 0;
+    int table_size = hash->size;
+    HashNode** hashTable = hash->table;
+    index = hash_fun_id(id, table_size);
+
+    HashNode* p = hashTable[index];
+
+    while (p) {
+        if (p->data->id == id)
+            return p;
+        p = p->next;
+    }
+    return NULL;
+}

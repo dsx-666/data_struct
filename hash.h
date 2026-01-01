@@ -3,12 +3,13 @@
 // 哈希表
 
 typedef struct location location;
-typedef struct Road_Link Road_Link;
+
+typedef struct Road Road;
 
 typedef struct HashNode {
 	location* data;   // 景点信息
     struct HashNode* next;  // 链表指针（解决冲突）
-    Road_Link* link; // 路链表存放路径信息
+    Road* road; // 路链表存放路径信息
 } HashNode;
 
 typedef struct {
@@ -50,6 +51,9 @@ int updateLocation(HashTable* table, location* loc);
 void showAllLocations(HashTable* hash);
 // 通过名称展示风景信息
 int show_Locations_by_ID(HashTable* hash, int id);
-
+// 通过字符串查找哈希节点
+HashNode* findHashNode_by_str(HashTable* hash, const char* name);
+// 通过ID查找哈希节点
+HashNode* findHashNode_by_id(HashTable* hash, int id);
 
 
