@@ -133,7 +133,7 @@ void find_location()
 		printf("未找到该景点！\n");
 		printf("\n");
 	}
-
+	
 }
 
 //添加景点基本信息
@@ -179,6 +179,7 @@ void add_location()
 		free(loc);
 		Sleep(1000);
 	}
+	system("cls");
 }
 
 //更新某景点的基本信息
@@ -227,6 +228,7 @@ void update_location()
 		printf("更新失败\n");
 		Sleep(1000);
 	}
+	system("cls");
 }
 
 //查看所有景点和其相关信息
@@ -283,7 +285,7 @@ void operate_add_path()
 		printf("已有对应的路径\n");
 		Sleep(1000);
 	}
-
+	system("cls");
 }
 
 //删除两个景点间的路径信息
@@ -325,6 +327,7 @@ void operate_delete_path()
 		printf("起点id和终点id不能相同\n");
 		Sleep(1000);
 	}
+	system("cls");
 }
 
 //更新两个对应景点的路径信息
@@ -375,7 +378,7 @@ void update_path()
 			Sleep(1000);
 		}
 	}
-	
+	system("cls");
 }
 
 //显示所有路径信息
@@ -582,6 +585,7 @@ void delete_location_path()
 		
 		Sleep(1000);
 	}
+	system("cls");
 }
 
 
