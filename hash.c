@@ -134,6 +134,7 @@ int insertLocation(HashTable* hash, location* loc) {
         return -1;
     }
     node->data = loc;
+    node->dist_length = -1;
     node->next = hashTable[index];
     node->road = NULL;
     hashTable[index] = node;
@@ -217,7 +218,7 @@ int deleteLocation_by_char(HashTable* hash, const char* name) {
                 pre->next = p->next;
             else
                 hashTable[index] = p->next;
-            free(p);
+            
             hash->count--;
             return 1;
         }
@@ -227,14 +228,13 @@ int deleteLocation_by_char(HashTable* hash, const char* name) {
     return 0;
 }
 int updateLocation(HashTable* table, location* loc) {
-    struct location* p = findLocation_by_id(table, loc->id);
-    if (!p) {
-        struct location* p = findLocation_by_str(table, loc->name);
+    location* p = findLocation_by_id(table, loc->id);
+    if (p == NULL) {
+        return -1;
     }
-    if (!p) return -1;
-
     strcpy(p->name, loc->name);
     strcpy(p->des, loc->des);
+    
     return 1;
 }
 
@@ -392,24 +392,34 @@ int eraseRoad_Link(HashTable* hash, int from_id, int to_id) {
     }
 	return 1; // 删除成功
 }
+
 void freeHashTable(HashTable* hash) {
     if (hash == NULL) { 
         return;
     }
 
-    // 遍历哈希表所有桶，释放每一个桶上的链表节点
+    // 遍历哈希表的所有桶
     for (int i = 0; i < hash->size; i++) {
         HashNode* p = hash->table[i]; // 当前桶的头节点
         while (p != NULL) {
             HashNode* temp = p; // 临时保存当前节点，用于释放
-            p = p->next;        
+            p = p->next;        // 先走到下一个节点，避免释放后断链
 
-            if (temp->data != NULL) {
-                free(temp->data);
-                temp->data = NULL;// 置空，杜绝野指针
+            // 释放当前哈希节点挂载的邻接边链表
+            if (temp->road != NULL) {
+                Road_Link* road_p = temp->road;
+                while (road_p != NULL) {
+                    Road_Link* road_temp = road_p;
+                    road_p = road_p->next;
+                    free(road_temp); // 释放每一条邻接边
+                    road_temp = NULL;
+                }
+                temp->road = NULL; // 置空
             }
 
-            // 释放哈希节点本身 HashNode
+            // 删掉无效的 temp->data 判断
+
+            // 释放哈希节点本身
             free(temp);
             temp = NULL;
         }
@@ -424,5 +434,38 @@ void freeHashTable(HashTable* hash) {
 
     // 释放哈希表结构体本体
     free(hash);
-    hash = NULL;
+}
+
+int insertDistHash(HashTable* hash, location* loc, int length) {
+    int index = 0;
+    int table_size = hash->size;
+    HashNode** hashTable = hash->table;
+    if (hash->type == 0) {
+        index = hash_fun_str(loc->name, table_size);
+    }
+    else {
+        index = hash_fun_id(loc->id, hash->size);
+    }
+
+    // 检查是否重复
+    HashNode* p = hashTable[index];
+    while (p) {
+        if (p->data->id == loc->id || strcmp(p->data->name, loc->name) == 0)
+            return 0;  // 已存在
+        p = p->next;
+    }
+
+    HashNode* node = (HashNode*)malloc(sizeof(HashNode));
+    if (node == NULL) {
+        return -1;
+    }
+    node->data = loc;
+    node->dist_length = length;
+    node->next = hashTable[index];
+    node->road = NULL;
+    hashTable[index] = node;
+
+    hash->count++;
+    rehash(hash);
+    return 1;
 }

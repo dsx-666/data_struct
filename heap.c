@@ -21,7 +21,7 @@ int empty_value_array(Value_Array* a) {
 		return 1;
 	}
 	else {
-		return -1;
+		return 0;
 	}
 }
 // 取对应index的array数据 不成功返回NULL
@@ -36,7 +36,7 @@ Value* show_array(Value_Array* a, int index) {
 }
 // 放入value进Value_Array尾 成功返回1 不成功返回-1
 int push_value(Value_Array* a, Value* data) {
-	if (a == NULL || data == NULL) {
+	if (data == NULL) {
 		return -1;
 	}
 	Value** temp = (Value**)realloc(a->arr, (a->size + 1) * sizeof(Value*));
@@ -50,12 +50,11 @@ int push_value(Value_Array* a, Value* data) {
 }
 // 交换array中对应i和j的索引
 void swap_array(Value_Array* a, int i, int j) {
-	if (a == NULL || i < 0 || j < 0 || i >= a->size || j >= a->size) {
-		return;
-	}
-	Value temp = *show_array(a, i);
-	*show_array(a, i) = *show_array(a, j);
-	*show_array(a, j) = temp;
+	if (!a || i < 0 || j < 0 || i >= a->size || j >= a->size) return;
+
+	Value* tmp = a->arr[i];
+	a->arr[i] = a->arr[j];
+	a->arr[j] = tmp;
 }
 // 将Value_Array尾元素赋值到首元素并且删除尾元素 如果成功将temp复制首元素 不成功返回-1
 int pop_value(Value_Array* a, Value* ans) {
@@ -67,9 +66,10 @@ int pop_value(Value_Array* a, Value* ans) {
 		swap_array(a, 0, a->size - 1);
 		Value** temp = (Value**)realloc(a->arr, (a->size - 1) * sizeof(Value*));
 		a->size--;
-		if (temp == NULL) {
+		if (a->size == 0) {
 			return 1;
 		}
+
 		a->arr = temp;
 		return 1;
 	}
@@ -151,8 +151,6 @@ void free_Value_Array(Value_Array* a) {
 	if (a == NULL) return;
 	if (a->arr != NULL) {
 		free(a->arr);
-		a->arr = NULL;
 	}
 	free(a);
-	a = NULL;
 }

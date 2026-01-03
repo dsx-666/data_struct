@@ -10,6 +10,7 @@ typedef struct HashNode {
 	location* data;   // 景点信息
     struct HashNode* next;  // 链表指针（解决冲突）
     Road_Link* road; // 路链表存放路径信息
+    int dist_length; // 迪杰斯特拉算法中存放距离或者prev节点ID
 } HashNode;
 
 typedef struct {
@@ -63,3 +64,5 @@ int eraseRoad_Link(HashTable* hash, int from_id, int to_id);
 int findRoad_Link(HashTable* hash, int from_id, int to_id);
 // 释放哈希表内存
 void freeHashTable(HashTable* hash);
+// 插入HashNode(只对迪杰斯特拉的dist有用)
+int insertDistHash(HashTable* hash, location* loc,int length);

@@ -8,6 +8,8 @@
 #include"read_config.h"
 #include<stdbool.h>
 #include<windows.h>
+#include "Dijkstra.h"
+
 void input_int(int* input);
 void input_char(char* c);
 //校园导游程序的菜单面板
@@ -160,17 +162,26 @@ void add_location()
 	printf("\n");
 	clearInputBuffer();
 	loc->id = id;
-	strncpy(loc->name, name, NAME_MAX);
-	strncpy(loc->des, des, DES_MAX);
+	strcpy(loc->name, name);
+	
+	strcpy(loc->des, des);
+	
 	int res1 = insertLocation(hash_id, loc);
 	int res2 = insertLocation(hash_str, loc);
 	if (res1 == 1 && res2 == 1) {
 		printf("插入成功\n");
 		Sleep(1000);
 	}
-	else if (res1 != 1 || res2 != 1) {
-		printf("景点id已存在\n");
-		
+	else if (res1 == 0||res2 == 0) {
+		if (res1 == 0) {
+			printf("景点id已存在\n");
+			deleteLocation_by_char(hash_str, loc->name);
+
+		}
+		else {
+			printf("景点名称已存在\n");
+			deleteLocation_by_id(hash_id, loc->id);
+		}
 		free(loc);
 		Sleep(1000);
 	}
@@ -197,7 +208,7 @@ void update_location()
 	//通过id查找看景点存不存在
 	location* pre_loc = findLocation_by_id(hash_id, id);
 	while (pre_loc == NULL) {
-		printf("当前输入id不存在，如果不像继续输入，输入0即可退出该流程\n");
+		printf("当前输入id不存在，如果不想继续输入，输入0即可退出该流程\n");
 		Sleep(1000);
 		input_int(&id);
 		if (id == 0) {
@@ -217,8 +228,16 @@ void update_location()
 	
 	scanf("%s", des);
 	printf("\n");
-	strncpy(new_loc.name, name, NAME_MAX);
-	strncpy(new_loc.des, des, DES_MAX);
+	if (findLocation_by_str(hash_str, name) != NULL) {
+		printf("名称已存在，更新失败\n");
+		Sleep(1000);
+		system("cls");
+		return;
+	}
+	strcpy(new_loc.name, name);
+
+	strcpy(new_loc.des, des);
+
 	int res = updateLocation(hash_id, &new_loc);
 	if (res == 1) {
 		printf("更新成功\n");
@@ -705,322 +724,9 @@ int* get_all_loc_ids(HashTable* hash, int* out_count) {
 	*out_count = count;
 	return ids;
 }
-Road_Link* get_road_link(int id)
-{
-	int idx = id % hash_id->size;
-	HashNode* p = hash_id->table[idx];
-	while (p != NULL) {
-		if (p->data->id == id) {
-			return p->road;
-		}
-		p = p->next;
-	}
-	return NULL;
-}
-void dijkstra_shortest_path()
-{
-	printf("\n\n");
-	printf("================== 查询两景点之间的最短路径（暴力Dijkstra） ==================\n");
-	printf("\n");
-	int startId, endId;
-	printf("请输入起点ID:");
-	scanf("%d", &startId);
-	printf("\n");
-	printf("请输入终点ID:");
-	scanf("%d", &endId);
-	printf("\n");
-	if (!findLocation_by_id(hash_id, startId) || !findLocation_by_id(hash_id, endId)) {
-		printf("输入的id不正确，无法找到对应景点\n");
-		clearInputBuffer();
-		Sleep(1000);
-		return;
-	}
-	if (startId == endId) {
-		printf("起点和终点不能相等\n");
-		clearInputBuffer();
-		Sleep(1000);
-		return;
-	}
-	int loc_count = 0;
-	int* all_ids = get_all_loc_ids(hash_id, &loc_count);
-	if (all_ids == NULL) {
-		printf("获取景点ID失败\n");
-		Sleep(1000);
-		return;
-	}
 
-	hash_vis = initHashTable(1, id_hash_size);
 
-	int all_nodes = 0;
-	for (int i = 0; i < loc_count; i++) {
-		if (all_ids[i] > all_nodes) all_nodes = all_ids[i];
-	}
-	
-	int use_size = all_nodes + 10;
-	
-	//这个是用来记录查找的起点到每个对应id最短的距离
-	int* dist = (int*)malloc(use_size * sizeof(int));
-	//这个是用来记录最短路径上每个节点的上一个节点的id
-	int* prev = (int*)malloc(use_size * sizeof(int));
-	
-	int* path = (int*)malloc(use_size * sizeof(int));
-	/*int* shortest_path = (int*)malloc(use_size * sizeof(int));*/
-	if (dist == NULL || prev == NULL || hash_vis == NULL || path == NULL ) {
-		printf("内存分配出问题\n");
-		free(dist);
-		free(prev);
-		freeHashTable(hash_vis);
-		free(path);
-		
-		return;
-	}
-	for (int i = 0;i < use_size;i++) {
-		dist[i] = INT_MAX;
-		prev[i] = -1;
-	}
-	dist[startId] = 0;
 
-	//现在最短路径节点数
-	int now_count = 0;
-	while (now_count < loc_count) {
-		//离起点最近的节点id
-		int clo_id = -1;
-		int min_dist = INT_MAX;
-		for (int i = 0;i < loc_count;i++) {
-			int curr_id = all_ids[i];
-			
-			if (findLocation_by_id(hash_vis, curr_id) == NULL && dist[curr_id] < min_dist) {
-				min_dist = dist[curr_id];
-				clo_id = curr_id;
-			}
-		}
-		if (clo_id == -1 || clo_id == endId) break;
-		location* temp_loc = (location*)malloc(sizeof(location));
-		*temp_loc = *findLocation_by_id(hash_id, clo_id);
-		insertLocation(hash_vis, temp_loc);
-		
-		now_count++;
-		Road_Link* p = get_road_link(clo_id);
-		while (p != NULL) {
-			int v = p->id;
-			int len = p->length;
-			if (dist[clo_id] != INT_MAX && dist[v] > dist[clo_id] + len) {
-				dist[v] = dist[clo_id] + len;
-				prev[v] = clo_id;
-			}
-			p = p->next;
-		}
-	}
-	if (dist[endId] == INT_MAX) {
-		printf("没有可达路径\n");
-		Sleep(1000);
-	}
-	else {
-		int path_len = 0;
-		for (int curr = endId;curr != -1;curr = prev[curr]) {
-			path[path_len++] = curr;
-		}
-		printf("从 %s 到 %s 的最短路径为：\n",
-			findLocation_by_id(hash_id, startId)->name, findLocation_by_id(hash_id, endId)->name);
-		for (int i = path_len - 1;i >= 0;i--) {
-			int curr_id = path[i];
-			location* curr_loc = findLocation_by_id(hash_id, curr_id);
-			printf("%s(%d)", curr_loc->name, curr_loc->id);
-			if (i != 0) printf("->");
-		}
-			printf("  总长度：%d m\n", dist[endId]);
-			memcpy(shortest_path, path, path_len * sizeof(int));
-		}
-	free(dist);
-	free(prev);
-	free(path);
-	
-	freeHashTable(hash_vis);
-	hash_vis = NULL;
-	free(all_ids);
-	clearInputBuffer();
-	Sleep(1000);
-}
-
-//使用dijkstra找最短路径（堆优化）
-//void dijkstra_shortest_path_heap()
-//{
-//	printf("================== 查询两景点之间的最短路径（堆优化Dijkstra） ==================\n");
-//	int startId, endId;
-//	printf("请输入起点ID:");
-//	scanf("%d", &startId);
-//	printf("请输入终点ID:");
-//	scanf("%d", &endId);
-//	location* start_loc = findLocation_by_id(hash_id, startId);
-//	location* end_loc = findLocation_by_id(hash_id, endId);
-//	if (start_loc == NULL || end_loc == NULL) {
-//		printf("输入的id不正确，无法找到对应景点\n");
-//		clearInputBuffer();
-//		return;
-//	}
-//	if (startId == endId) {
-//		printf("起点和终点不能相等\n");
-//		clearInputBuffer();
-//		return;
-//	}
-//	/*hash_vis = initHashTable(1, id_hash_size);
-//	if (hash_vis == NULL) {
-//		printf("hash_vis初始化失败\n");
-//		return;
-//	}*/
-//	int max_id = 0;
-//	int loc_count = 0;
-//	for (int i = 0; i < hash_id->size; i++) {
-//		for (HashNode* p = hash_id->table[i]; p; p = p->next) {
-//			loc_count++;
-//			if (p->data->id > max_id) max_id = p->data->id;
-//		}
-//	}
-//	int use_size = max_id + 10;
-//	int* visited = (int*)calloc(use_size, sizeof(int));
-//	int* dist = (int*)malloc(use_size * sizeof(int));
-//	int* prev = (int*)malloc(use_size * sizeof(int));
-//	/*int* path = (int*)malloc(use_size * sizeof(int));*/
-//	/*int* shortest_path = (int*)malloc(use_size * sizeof(int));*/
-//	if (dist == NULL || prev == NULL||visited==NULL) {
-//		printf("内存分配出问题\n");
-//		free(dist);
-//		free(prev);
-//		free(visited);
-//		freeHashTable(hash_vis);
-//		return;
-//	}
-//	for (int i = 0; i < use_size; i++) {
-//		dist[i] = INT_MAX;
-//		prev[i] = -1;
-//	}
-//	dist[startId] = 0;
-//	Value_Array* min_heap = init_value_array();
-//	if (min_heap == NULL) {
-//		printf("堆初始化失败\n");
-//		free(dist);
-//		free(prev);
-//		
-//		freeHashTable(hash_vis);
-//		return;
-//	}
-//
-//	Value start_val;
-//	/*start_val.data = start_loc;*/
-//	start_val.data = NULL;
-//	start_val.value = 0;
-//	Value* heap_val = (Value*)malloc(sizeof(Value));
-//
-//	if (heap_val == NULL) {
-//        printf("堆节点内存分配失败\n");
-//        free_Value_Array(min_heap);
-//        free(dist);
-//		free(prev);
-//        freeHashTable(hash_vis);
-//        return;
-//    }
-//	*heap_val = start_val;
-//    /*heap_val->data = start_loc;
-//    heap_val->value = 0;*/
-//    insert_heap(min_heap, heap_val);
-//	int* heap_id_map = (int*)malloc(1000 * sizeof(int));
-//	int heap_id_count = 0;
-//	heap_id_map[heap_id_count++] = startId;
-//	while (empty_value_array(min_heap) != 1) {
-//		Value curr_val;
-//		if (erase_heap(min_heap, &curr_val) == -1) {
-//			break;
-//		}
-//		/*location* curr_loc = curr_val.data;
-//		if (curr_loc == NULL) break;*/
-//		/*int curr_id = curr_loc->id;*/
-//		int curr_dist = curr_val.value;
-//		int curr_id = -1;
-//		if (heap_id_count > 0) {
-//			curr_id = heap_id_map[--heap_id_count];
-//		}
-//		if (curr_id == -1) break;
-//
-//		if (findLocation_by_id(hash_vis, curr_id) != NULL) {
-//			continue;
-//		}
-//
-//		location* temp_loc = (location*)malloc(sizeof(location));
-//		temp_loc->id = curr_id;
-//		/*strncpy(temp_loc->name, curr_loc->name, NAME_MAX);
-//		strncpy(temp_loc->des, curr_loc->des, DES_MAX);*/
-//		strcpy(temp_loc->name, "");
-//		strcpy(temp_loc->des, "");
-//		insertLocation(hash_vis, temp_loc);
-//
-//		Road_Link* p_road = get_road_link(curr_id);
-//		while (p_road != NULL) {
-//			int next_id = p_road->id;
-//			int path_len = p_road->length;
-//			/*location* next_loc = findLocation_by_id(hash_id, next_id);*/
-//
-//			if (dist[curr_id] != INT_MAX && dist[next_id] > dist[curr_id] + path_len) {
-//				dist[next_id] = dist[curr_id] + path_len;
-//				prev[next_id] = curr_id;
-//
-//				/*if (next_loc == NULL) {
-//					p_road = p_road->next;
-//					continue;
-//				}*/
-//				Value next_val;
-//				/*next_val.data = next_loc;*/
-//				next_val.data = NULL;
-//				next_val.value = dist[next_id];
-//				Value* heap_next_val = (Value*)malloc(sizeof(Value));
-//				*heap_next_val = next_val;
-//				insert_heap(min_heap, heap_next_val);
-//				heap_id_map[heap_id_count++] = next_id;
-//			}
-//			p_road = p_road->next;
-//		}
-//
-//		if (curr_id == endId) {
-//			break;
-//		}
-//	}
-//	if (dist[endId] == INT_MAX) {
-//		printf("没有可达路径\n");
-//	}
-//	else {
-//		int path[100];
-//		int path_len = 0;
-//		for (int curr = endId; curr != -1; curr = prev[curr]) {
-//			path[path_len++] = curr;
-//		}
-//		printf("从 %s 到 %s 的最短路径为：\n", start_loc->name, end_loc->name);
-//		for (int i = path_len - 1; i >= 0; i--) {
-//			int curr_id = path[i];
-//			location* curr_loc = findLocation_by_id(hash_id, curr_id);
-//			printf("%s(%d)", curr_loc->name, curr_loc->id);
-//			if (i != 0) printf("->");
-//		}
-//		printf("  总长度：%d m\n", dist[endId]);
-//		/*memcpy(shortest_path, path, path_len * sizeof(int));*/
-//	}
-//
-//	free(dist);
-//	free(prev);
-//	/*free(path);
-//	free(shortest_path);*/
-//
-//	if (min_heap != NULL && min_heap->arr != NULL) {
-//		for (int i = 0; i < min_heap->size; i++) {
-//			/*if (min_heap->arr[i] != NULL) {
-//				free(min_heap->arr[i]);
-//			}*/
-//			free(min_heap->arr[i]);
-//		}
-//	}
-//	free_Value_Array(min_heap);
-//	freeHashTable(hash_vis);
-//	hash_vis = NULL;
-//	clearInputBuffer();
-//}
 //如果整数输入错误，重新输入
 void input_int(int* input)
 {
@@ -1135,8 +841,8 @@ int main()
 			find_location();
 			break;
 		case 2:
-			/*dijkstra_shortest_path_heap();*/
-			/*query_shortest_path_dfs();*/
+			//dijkstra_shortest_path_heap();
+			//query_shortest_path_dfs();
 			dijkstra_shortest_path();
 			break;
 		case 3:

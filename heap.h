@@ -4,7 +4,7 @@ typedef struct location location;
 
 typedef struct {
 	int value;
-	location* data;
+	int id;
 }Value;
 
 typedef struct {
