@@ -58,9 +58,10 @@ void test_kmp() {
     int brute_ans = brute_count(text, pattern);
     end = clock();
     double brute_time = (double)(end - start) / CLOCKS_PER_SEC;
-
+    
     // KMP
     start = clock();
+    
     int kmp_ans = kmp_find(text,pattern);
     end = clock();
     double kmp_time = (double)(end - start) / CLOCKS_PER_SEC;

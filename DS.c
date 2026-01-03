@@ -9,6 +9,7 @@
 #include<stdbool.h>
 #include<windows.h>
 #include "Dijkstra.h"
+#include"kmp.h"
 
 void input_int(int* input);
 void input_char(char* c);
@@ -28,6 +29,8 @@ void menu() {
 	printf("9：更新两个对应景点的路径信息                                \n");
 	printf("10：查看所有景点和其相关信息                                 \n");
 	printf("11：显示所有路径信息                                         \n");
+	printf("12：模糊查询景点基本信息                                     \n");
+	printf("13：模糊查询景点路径                                         \n");
 	printf("-------------------------------------------------------------\n");
 	printf("请输入你的选择：");
 }
@@ -135,7 +138,10 @@ void find_location()
 		printf("未找到该景点！\n");
 		printf("\n");
 	}
-	
+	printf("请输入任意键退出");
+	char a = getchar();
+	a = getchar();
+	system("cls");
 }
 
 //添加景点基本信息
@@ -253,8 +259,18 @@ void update_location()
 //查看所有景点和其相关信息
 void show_all_locations()
 {
-	showAllLocations(hash_id);
-	Sleep(3000);
+	int page;
+	printf("请输入要查询的页码(每页显示5条记录):");
+	scanf("%d", &page);
+	int start = (page - 1) * 5+1;
+	int count=showAllLocations(hash_id,start);
+	printf("共%d条查询结果\n", count);
+	printf("请输入任意键退出");
+	char a = getchar();
+	a = getchar();
+	/*Sleep(3000);*/
+	system("cls");
+
 }
 
 
@@ -410,51 +426,69 @@ void show_all_path()
 	printf("\n\n");
 	printf("==================== 显示所有路径信息 ====================\n");
 	printf("\n");
+	int page;
+	printf("请输入要查询的页码(每页显示3条记录):");
+	scanf("%d", &page);
+	int start = (page - 1) * 3 + 1;	
+	int count = 0;
 	int has_location = 0;
 	for (int i = 0;i < hash_id->size;i++) {
 		HashNode* p = hash_id->table[i];
-		while (p!=NULL) {
-			has_location = 1;
-			location* loc = p->data;
-			if (loc == NULL) {
-				p = p->next;
-				continue;
-			}
-			int current_id = loc->id;
-			Road_Link* path = findHashNode_by_id(hash_id, current_id)->road;
-			printf("\n\n");
-			printf("景点【名称：%s（ID：%d）】的路径：\n", loc->name, current_id);
-			if (path == NULL) {
-				printf("\n\n");
-				printf("该景点无任何路径\n");
-				Sleep(1000);
-			}
-			else {
-				while (path != NULL) {
-					location* end_loc = findLocation_by_id(hash_id, path->id);
-					if (end_loc == NULL) {
-						printf("\n\n");
-						printf("  → 未知景点（ID：%d），长度：%d米\n", path->id, path->length);
-						
-					}
-					else {
-						printf("\n\n");
-						printf("→ 名称：%s(ID:%d),距离:%d m\n", end_loc->name, path->id, path->length);
-						
-					}
-					path = path->next;
+			
+			while (p != NULL) {
+				has_location = 1;
+				location* loc = p->data;
+				if (loc == NULL) {
+					p = p->next;
+					continue;
 				}
-				Sleep(1000);
+				int current_id = loc->id;
+				Road_Link* path = findHashNode_by_id(hash_id, current_id)->road;
+				if (count >= start - 1 && count < start + 2) {
+					printf("\n\n");
+					printf("景点【名称：%s（ID：%d）】的路径：\n", loc->name, current_id);
+					if (path == NULL) {
+						printf("\n\n");
+						printf("该景点无任何路径\n");
+						Sleep(1000);
+					}
+
+					else {
+						while (path != NULL) {
+							location* end_loc = findLocation_by_id(hash_id, path->id);
+							if (end_loc == NULL) {
+								printf("\n\n");
+								printf("  → 未知景点（ID：%d），长度：%d米\n", path->id, path->length);
+
+							}
+							else {
+								printf("\n\n");
+								printf("→ 名称：%s(ID:%d),距离:%d m\n", end_loc->name, path->id, path->length);
+
+							}
+
+							path = path->next;
+						}
+						Sleep(1000);
+					}
+
+					printf("\n");
+				}
+				p = p->next;
+				count++;
 			}
-			printf("\n");
-			p = p->next;
-		}
+		
 	}
 	if (!has_location) {
 		printf("\n\n");
 		printf("无任何景点\n");
 		Sleep(1000);
 	}
+	printf("%d\n", count);
+	printf("请按任意键退出");
+	char a = getchar();
+	a = getchar();
+	system("cls");
 }
 
 
@@ -462,30 +496,40 @@ void show_all_path()
 int* path=NULL;                  
 int path_length=0;     
 int path_count=0;      
+//分页查询所用的某页其实的位数
+int start_path_dfs=0;
 
 void dfs(int currentId, int endId, int currentLen,int max_id_plus)
 {
+	
 	if (currentId < 0 || currentId > max_id_plus) {
 		return;
 	}
-	if (currentId == endId) {
-		path_count++;
-		printf("路径 %d：", path_count);
-		for (int i = 0;i < path_length;i++) {
-			location* loc = findLocation_by_id(hash_id, path[i]);
-			if (loc == NULL) {
-				printf("未知景点(%d)", path[i]);
-			}
-			else {
-				printf("%s(%d)", loc->name, loc->id);
-			}
-			if (i != path_length - 1) {
-				printf("->");
-			}
-		}
-		printf("  总长度：%d m\n", currentLen);
-		
+	if (path_count >= start_path_dfs + 3) {
 		return;
+	}
+	if (currentId == endId) {
+		
+		path_count++;
+		if (path_count >= start_path_dfs && path_count < start_path_dfs + 3) {
+			printf("路径 %d：", path_count);
+			for (int i = 0;i < path_length;i++) {
+				location* loc = findLocation_by_id(hash_id, path[i]);
+				if (loc == NULL) {
+					printf("未知景点(%d)", path[i]);
+				}
+				else {
+					printf("%s(%d)", loc->name, loc->id);
+				}
+				if (i != path_length - 1) {
+					printf("->");
+				}
+			}
+			printf("\n  总长度：%d m\n\n\n", currentLen);
+			
+		}
+			return;
+		
 	}
 	if (currentId > max_id_plus) return;
 	location* temp = (location*)malloc(sizeof(location));
@@ -539,6 +583,10 @@ void query_two_all_paths()
 		Sleep(1000);
 		return;
 	}
+	int page;
+	printf("请输入要查询的页数(每页显示3条路径):");
+	scanf("%d", &page);
+	start_path_dfs = (page - 1) * 3 + 1;
 	path = (int*)malloc((hash_id->count+1) * sizeof(int));
 	hash_vis = initHashTable(1, id_hash_size);
 	if (path == NULL || hash_vis == NULL) {
@@ -555,15 +603,20 @@ void query_two_all_paths()
 	dfs(startId, endId, 0,hash_id->count+1);
 	if (path_count == 0) {
 		printf("没有找到路径\n");
-	}else{
+	}/*else{
 		printf("共找到 %d 条路径\n", path_count);
-	}
+	}*/
 	free(path);
 	freeHashTable(hash_vis);
 	
 	path = NULL;
 	hash_vis = NULL;
 	Sleep(1000);
+	printf("请输入任意键退出");
+	char a = getchar();
+	a = getchar();
+	start_path_dfs = 0;
+	system("cls");
 }
 
 //删除某景点和其对应的路径信息
@@ -703,6 +756,10 @@ void query_shortest_path_dfs()
 	free(shortest_path);
 	shortest_path = NULL;
 	Sleep(1000);
+	printf("请输入任意键退出");
+	char a = getchar();
+	a = getchar();
+	system("cls");
 }
 
 //使用dijkstra找最短路径（暴力）
@@ -726,6 +783,133 @@ int* get_all_loc_ids(HashTable* hash, int* out_count) {
 }
 
 
+////模糊查询景点基本信息
+void fuzzy_query_location()
+{
+	printf("\n\n");
+	printf("================== 模糊查询景点基本信息 ==================\n");
+	printf("\n");
+	printf("请输入要查询的景点名称关键字:");
+	char keyword[NAME_MAX];
+	scanf("%s", keyword);
+	printf("\n");
+	int page;
+	printf("请输入要查询的页码(每页显示5条记录，输入0退出查询):");
+	
+	scanf("%d", &page);
+	if (page == 0) return;
+	int count = 0;
+	location* locs = kmp_search_location(hash_str, keyword,&count);
+	if (locs == NULL) {
+		printf("未找到相关景点信息\n");
+		Sleep(1000);
+		system("cls");
+		return;
+	}
+	if (count == 0) printf("未找到相关景点信息\n");
+	int index = 0;
+	int start = (page - 1) * 5;
+	if (start >= count) {
+		printf("该页码无数据\n");
+		free(locs);
+		Sleep(1000);
+		system("cls");
+		return;
+	}
+	int end = page * 5;
+	printf("\n\n");
+	printf("===== 查询结果 =====\n");
+	for (int i = start; i < end&&i<count; i++) { 
+		if (locs[i].id == 0) {
+			break;
+		}
+		printf("ID：%d\n名称：%s\n简介：%s\n", locs[i].id, locs[i].name, locs[i].des);
+		printf("\n");
+		index++;
+	}
+	printf("总共%d页,%d个查询结果\n", (count + 4) / 5,count);
+	free(locs);
+	printf("请输入任意键退出");
+	char a = getchar();
+	a = getchar();
+	system("cls");
+
+}
+
+//模糊查询景点路径
+void fuzzy_query_path()
+{
+	printf("\n\n");
+	printf("================== 模糊查询景点路径信息 ==================\n");
+	printf("\n");
+	printf("请输入要查询的景点名称关键字:");
+	char keyword[NAME_MAX];
+	scanf("%s", keyword);
+	printf("\n");
+	printf("请输入要查询的页码(每页显示5条记录，输入0退出查询):");
+	int page;
+	scanf("%d", &page);
+	if (page == 0) return;
+	int count = 0;
+	location* locs = kmp_search_location(hash_str, keyword, &count);
+	if (locs == NULL) {
+		printf("未找到相关景点信息\n");
+		Sleep(1000);
+		system("cls");
+		return;
+	}
+	if (count == 0) printf("未找到相关景点信息\n");
+	int index = 0;
+	int start = (page - 1) * 5;
+	if (start >= count) {
+		printf("该页码无数据\n");
+		free(locs);
+		Sleep(1000);
+		system("cls");
+		return;
+	}
+	int end = page * 5;
+	printf("\n\n");
+	printf("===== 查询结果 =====\n");
+	for (int i = start; i < end && i < count; i++) {
+		if (locs[i].id == 0) {
+			break;
+		}
+		printf("景点【名称：%s（ID：%d）】的路径：\n", locs[i].name, locs[i].id);
+		Road_Link* path = findHashNode_by_id(hash_id, locs[i].id)->road;
+		if (path == NULL) {
+			printf("\n\n");
+			printf("该景点无任何路径\n");
+			Sleep(1000);
+		}
+		else {
+			while (path != NULL) {
+				location* end_loc = findLocation_by_id(hash_id, path->id);
+				if (end_loc == NULL) {
+					printf("\n\n");
+					printf("  → 未知景点（ID：%d），长度：%d米\n", path->id, path->length);
+
+				}
+				else {
+					printf("\n\n");
+					printf("→ 名称：%s(ID:%d),距离:%d m\n", end_loc->name, path->id, path->length);
+
+				}
+				path = path->next;
+			}
+			Sleep(1000);
+		}
+		printf("\n");
+		index++;
+	}
+	printf("总共%d页,%d个查询结果\n", (count + 4) / 5, count);
+	free(locs);
+	printf("请输入任意键退出");
+	char a = getchar();
+	a = getchar();
+	system("cls");
+
+}
 
 //如果整数输入错误，重新输入
 void input_int(int* input)
@@ -822,12 +1006,12 @@ int main()
 		printf("初始化失败\n");
 		return -1;
 	}
-	
+	init_test_data();
 	while (true) {
 		menu();
 		int choice = judge_validity_input();
 		while (true) {
-			if (choice >= 0 && choice <= 12) {
+			if (choice >= 0 && choice <= 13) {
 				break;
 			}
 			else {
@@ -873,6 +1057,10 @@ int main()
 			show_all_path();
 			break;
 		case 12:
+			fuzzy_query_location();
+			break;
+		case 13:
+			fuzzy_query_path();
 			break;
 		case 0:
 			printf("感谢您使用本校园导游系统！即将退出。\n");

@@ -238,17 +238,31 @@ int updateLocation(HashTable* table, location* loc) {
     return 1;
 }
 
-void showAllLocations(HashTable* hash) {
+int showAllLocations(HashTable* hash,int boundry) {
     printf("\n==================== 所有景点信息 ====================\n");
+    int count = 0;
     for (int i = 0; i < hash->size; i++) {
         HashNode* p = hash->table[i];
         while (p) {
-            printf("ID:%d\n名称:%s\n简介:%s\n\n",
-                p->data->id, p->data->name, p->data->des);
+            count++;
+            if (count >= boundry && count <= boundry + 5) {
+                printf("ID:%d\n名称:%s\n简介:%s\n\n",
+                    p->data->id, p->data->name, p->data->des);
+            }
             p = p->next;
         }
+  
     }
+    if (count == 0) {
+        printf("当前无数据\n");
+        return 0;
+    }
+	else if (count < boundry) {
+		printf("该页无数据\n");
+	}
+
     printf("======================================================\n");
+    return count;
 }
 
 int show_Locations_by_ID(HashTable* hash, int id) {

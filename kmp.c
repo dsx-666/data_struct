@@ -6,6 +6,7 @@
 #include "graph.h"
 
 int kmp_find(const char* string, const char* substr) {
+	
 	int str = strlen(string);
 	int sub = strlen(substr);
 	int* next = (int*)malloc(sub * sizeof(int));
@@ -31,6 +32,7 @@ int kmp_find(const char* string, const char* substr) {
 		}
 		if (string[i] == substr[index]) {
 			index++;
+			
 		}
 		if (index == sub) {
 			free(next);
@@ -40,7 +42,8 @@ int kmp_find(const char* string, const char* substr) {
 	free(next);
 	return -1;
 }
-location* kmp_search_location(HashTable* hash, const char* name) {
+location* kmp_search_location(HashTable* hash, const char* name,int* count) {
+	*count = 0;
 	location* ans = NULL;
 	int index = 0;
 	int size = hash->size;
@@ -48,6 +51,7 @@ location* kmp_search_location(HashTable* hash, const char* name) {
 	for (int i = 0; i < size; i++) {
 		HashNode* p = table[i];
 		while (p) {
+			
 			if (kmp_find(p->data->name, name) == 1) {
 
 				location* temp = (location*)realloc(ans, (index + 1) * sizeof(location));
@@ -55,6 +59,7 @@ location* kmp_search_location(HashTable* hash, const char* name) {
 					ans = temp;
 					ans[index] = *(p->data);
 					index++;
+					*count = index;
 				}
 			}
 			p = p->next;

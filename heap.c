@@ -67,6 +67,7 @@ int pop_value(Value_Array* a, Value* ans) {
 		Value** temp = (Value**)realloc(a->arr, (a->size - 1) * sizeof(Value*));
 		a->size--;
 		if (a->size == 0) {
+			a->arr = NULL;
 			return 1;
 		}
 

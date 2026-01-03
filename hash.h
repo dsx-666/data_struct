@@ -49,7 +49,7 @@ int deleteLocation_by_char(HashTable* hash, const char* name);
 // 通过ID删除风景
 int updateLocation(HashTable* table, location* loc);
 // 展示全部风景信息
-void showAllLocations(HashTable* hash);
+int showAllLocations(HashTable* hash,int boundry);
 // 通过名称展示风景信息
 int show_Locations_by_ID(HashTable* hash, int id);
 // 通过字符串查找哈希节点
