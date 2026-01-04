@@ -245,7 +245,7 @@ int showAllLocations(HashTable* hash,int boundry) {
         HashNode* p = hash->table[i];
         while (p) {
             count++;
-            if (count >= boundry && count <= boundry + 5) {
+            if (count >= boundry && count <= boundry + 5&&boundry!=0) {
                 printf("ID:%d\nÃû³Æ:%s\n¼ò½é:%s\n\n",
                     p->data->id, p->data->name, p->data->des);
             }
