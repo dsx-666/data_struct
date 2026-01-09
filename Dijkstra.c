@@ -153,6 +153,7 @@ void dijkstra_shortest_path()
 
 void dijkstra_shortest_path_heap()
 {
+	system("cls");
 	printf("\n\n");
 	printf("================== 查询两景点之间的最短路径（堆优化Dijkstra） ==================\n");
 	printf("\n");
@@ -294,4 +295,8 @@ void dijkstra_shortest_path_heap()
 	hash_vis = NULL;
 	clearInputBuffer();
 	Sleep(1000);
+	printf("点击回车键退出！");
+	getchar();
+	
+	system("cls");
 }

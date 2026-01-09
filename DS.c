@@ -32,9 +32,9 @@ void menu() {
 	printf("4：添加景点基本信息                                          \n");
 	printf("5：删除某景点和其对应的路径信息                              \n");
 	printf("6：更新某景点的基本信息                                      \n");
-	printf("7：添加两个景点的路径信息                                    \n");
+	printf("7：添加两个景点的路径                                        \n");
 	printf("8：删除两个景点间的路径信息                                  \n");
-	printf("9：更新两个对应景点的路径信息                                \n");
+	printf("9：更新两个对应景点之间的路径长度                            \n");
 	printf("10：查看所有景点和其相关信息                                 \n");
 	printf("11：显示所有路径信息                                         \n");
 	printf("12：模糊查询景点基本信息                                     \n");
@@ -279,7 +279,8 @@ void show_all_locations()
 	scanf("%d", &page);
 	int start = (page - 1) * 5+1;
 	int count;
-	if (page < 0) {
+	
+	while (page < 0||page>(num + 4) / 5) {
 		printf("页码输入错误\n");
 		Sleep(1000);
 		system("cls");
@@ -288,9 +289,18 @@ void show_all_locations()
 		scanf("%d", &page);
 		int start = (page - 1) * 5 + 1;
 	}
+	
+	if (page == 0) {
+		system("cls");
+		return;
+	}
+	
 	while (page != 0) {
 		count = 0;
 		printf("第%d页查询结果如下：\n", page);
+		if (page < 0 || page>(num + 4) / 5) {
+			system("cls");
+		}
 		count = showAllLocations(hash_id, start);
 		printf("总共%d页,%d条查询结果\n", (count + 4) / 5, count);
 		printf("请输入要查询的页码(每页显示5条记录,按0可回到上一步):");
@@ -493,7 +503,7 @@ void show_all_path()
 	scanf("%d", &page);
 	
 	int start = (page - 1) * 3 + 1;	
-	if (page < 0) {
+	while (page < 0) {
 		printf("页码输入错误\n");
 		Sleep(1000);
 		system("cls");
@@ -502,6 +512,10 @@ void show_all_path()
 
 		scanf("%d", &page);
 		int start = (page - 1) * 3 + 1;
+	}
+	if (page == 0) {
+		system("cls");
+		return;
 	}
 	while (page != 0&&start+3< (num + 2) / 3) {
 		printf("第%d页查询结果如下：\n", page);
@@ -573,7 +587,9 @@ void show_all_path()
 	}
 	if (start + 3 >= (num + 2) / 3) {
 		printf("没有更多页面了\n");
+
 		Sleep(1000);
+		system("cls");
 	}
 	/*printf("\n请按任意键退出");
 	char a = getchar();
@@ -678,13 +694,17 @@ void query_two_all_paths()
 	printf("请输入要查询的页数(每页显示3条路径,按0可回到主界面):");
 	scanf("%d", &page);
 	start_path_dfs = (page - 1) * 3 + 1;
-	if (page < 0) {
+	while (page < 0) {
 		printf("页码输入错误\n");
 		Sleep(1000);
 		system("cls");
 		printf("请重新输入要查询的页数(每页显示3条路径,按0可回到主界面):");
 		scanf("%d", &page);
 		start_path_dfs = (page - 1) * 3 + 1;
+	}
+	if (page == 0) {
+		system("cls");
+		return;
 	}
 	while (page != 0) {
 		printf("第%d页查询结果如下：\n", page);
@@ -742,6 +762,7 @@ void delete_location_path()
 	if (loc == NULL) {
 		printf("该景点ID不存在！\n");
 		Sleep(1000);
+		system("cls");
 		return;
 	}
 	for (int i = 0;i < hash_id->size;i++) {
@@ -872,7 +893,6 @@ void query_shortest_path_dfs()
 	system("cls");
 }
 
-//使用dijkstra找最短路径（暴力）
 int* get_all_loc_ids(HashTable* hash, int* out_count) {
 	int count = 0;
 	for (int i = 0; i < hash->size; i++) {
@@ -912,13 +932,17 @@ void fuzzy_query_location()
 	
 	
 	scanf("%d", &page);
-	if (page < 0) {
+	while (page < 0||page>(num + 4) / 5) {
 		printf("页码输入错误\n");
 		Sleep(1000);
 		system("cls");
 		printf("总共%d页,%d个查询结果\n", (num + 4) / 5, num);
 		printf("请重新输入要查询的页码(每页显示5条记录，输入0退出查询):");
 		scanf("%d", &page);
+	}
+	if (page == 0) {
+		system("cls");
+		return;
 	}
 	while (page != 0) {
 		printf("第%d页查询结果如下：\n", page);
@@ -983,13 +1007,17 @@ void fuzzy_query_path()
 	printf("请输入要查询的页码(每页显示5条记录，输入0退出查询):");
 	int page;
 	scanf("%d", &page);
-	if (page < 0) {
+	while (page < 0||page>(num + 4) / 5) {
 		printf("页码输入错误\n");
 		Sleep(1000);
 		system("cls");
 		printf("总共%d页,%d个查询结果\n", (num + 4) / 5, num);
 		printf("请重新输入要查询的页码(每页显示5条记录，输入0退出查询):");
 		scanf("%d", &page);
+	}
+	if (page == 0) {
+		system("cls");
+		return;
 	}
 	while (page != 0) {
 		printf("第%d页查询结果如下：\n", page);
@@ -1023,6 +1051,7 @@ void fuzzy_query_path()
 			if (path == NULL) {
 				printf("\n\n");
 				printf("该景点无任何路径\n");
+				
 				Sleep(1000);
 			}
 			else {
@@ -1096,27 +1125,14 @@ void enter_again() {
 }
 //主界面组件
 void print_header() {
-	printf("\n");
-	printf("############################################################################################\n");
-	printf("##                                                                                        ##\n");
-	printf("##   @@@@@@@   @@@@@@   @@@@@@@@@@   @@@@@@@   @@@  @@@   @@@@@@      @@@@@@@@  @@@  @@@    ##\n");
-	printf("##  @@@@@@@@  @@@@@@@@  @@@@@@@@@@@  @@@@@@@@  @@@  @@@  @@@@@@@     @@@@@@@@@  @@@  @@@    ##\n");
-	printf("##  !@@       @@!  @@@  @@! @@! @@!  @@!  @@@  @@!  @@@  !@@         !@@        @@!  @@@    ##\n");
-	printf("##  !@!       !@!  @!@  !@! !@! !@!  !@!  @!@  !@!  @!@  !@!         !@!        !@!  @!@    ##\n");
-	printf("##  !@!       @!@!@!@!  @!! !!@ @!@  @!@@!@!   @!@  !@!  !!@@!!      !!@@!!     @!@  !@!    ##\n");
-	printf("##  !!!       !!!@!!!!  !@!   ! !@!  !!@!!!    !@!  !!!   !!@!!!      !!@!!!    !@!  !!!    ##\n");
-	printf("##  :!!       !!:  !!!  !!:     !!:  !!:       !!:  !!!       !:!         !:!   !!:  !!!    ##\n");
-	printf("##  :!:       :!:  !:!  :!:     :!:  :!:       :!:  !:!      !:!         !:!    :!:  !:!    ##\n");
-	printf("##   ::: :::  ::   :::  :::     ::    ::       ::::: ::  :::: ::     :::: ::    ::::: ::    ##\n");
-	printf("##   :: :: :   :   : :   :      :     :         : :  :   :: : :      :: : :      : :  :     ##\n");
-	printf("##                                                                                        ##\n");
-	printf("##                    G  U  I  D  E      S  Y  S  T  E  M                                 ##\n");
-	printf("##                                                                                        ##\n");
-	printf("############################################################################################\n");
-	printf("\n");
-	printf("                            > 欢迎来到：校园导游咨询系统 <\n");
-	printf("                            > Welcome to Campus Guide System <\n");
-	printf("\n\n");
+	printf("***********************************************************\n");
+	printf("  ____    _    __  __ ____  _   _ ____    ____ _   _ ___ ____  _____ \n");
+	printf(" / ___|  / \\  |  \\/  |  _ \\| | | / ___|  / ___| | | |_ _|  _ \\| ____|\n");
+	printf("| |     / _ \\ | |\\/| | |_) | | | \\___ \\ | |  _| | | || || | | |  _|  \n");
+	printf("| |___ / ___ \\| |  | |  __/| |_| |___) || |_| | |_| || || |_| | |___ \n");
+	printf(" \\____/_/   \\_\\_|  |_|_|    \\___/|____/  \\____|\\___/|___|____/|_____|\n");
+	printf("\n***********************************************************\n");
+	printf("                 欢迎来到校园导游咨询系统\n\n");
 }
 
 void loading_bar() {
@@ -1207,8 +1223,8 @@ int main()
 		return -1;
 	}
 	
-
-	init_test_data();
+	//测试用的生成的海量数据集
+	/*init_test_data();*/
 	// 1. 清屏
 	#ifdef _WIN32
 	system("cls");
@@ -1241,9 +1257,9 @@ int main()
 			find_location();
 			break;
 		case 2:
-			//dijkstra_shortest_path_heap();
-			//query_shortest_path_dfs();
-			dijkstra_shortest_path();
+			dijkstra_shortest_path_heap();
+			/*query_shortest_path_dfs();*/
+			/*dijkstra_shortest_path();*/
 			break;
 		case 3:
 			query_two_all_paths();
